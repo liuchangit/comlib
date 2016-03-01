@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article>
+	<articleinfo>
+		<title>Config模块简介</title>
+		<author>charles <email>liuchang@bbchexian.com</email></author>
+	</articleinfo>
+	<section>
+		<title>功能描述</title>
+		<para>
+		从静态配置文件（典型的是.properties文件）中读取所有配置项，一般在应用程序启动时初始化一次，为其它模块提供访问配置项的只读接口。
+		一个配置项是一个名-值对，可从接口直接获取包括int/long/boolean/float/double/string/Date/InetSocketAddress类型在内的选项值。
+		</para>
+		<para>
+		选项名是.号相连的多个片断构成的字符串，所有选项以树形结构组织。
+		例如一个配置文件中有以下配置项：
+			<code>sys.module.item=1</code>
+			<code>app.module1.a=xx</code>
+			<code>app.module2.b=2011-07-27</code>
+			
+		在Config中表示的结构如下：
+			root(root结点无意义)
+			  |__sys
+			  |	  |__module
+			  |	  		|__item
+			  |__app
+			  	  |__module1
+			  	  |		|__a
+			  	  |__module2
+			  	  		|__b
+			  	  		
+		可以取树形结构的一个分支构成配置项子集，分支同样用一个Config表示，假设以root表示上图的Config对象，则：
+			<code>Config appConf = root.getBranch('app');</code>
+		可得到app分支
+		</para>
+	</section>
+	<section>
+		<title>用法举例</title>
+		<para>
+			假设配置文件名是config.properties，下述代码取得Config实例:
+			<code>Config conf = new PropertiesConfig('config'); </code>
+		</para>
+		<para>
+			假设以root表示上节树形结构所示的Config对象，下面是几种用法：
+			<code>int item = root.getInt('sys.module.item'); // => 1 </code>
+			<code>int item = root.getBranch('sys.module').getInt('item'); // => 1 </code>
+			<code>String a = root.get('app.module1.a'); // => 'xx' </code>
+			<code>String a = root.getBranch('app.module1.a').get(); // => 'xx' </code>
+			<code>Date b = root.getDate('app.module2.b'); </code>
+		</para>
+		<para>
+			此外还可以获取多个值，如：
+			//memcache.servers=192.168.0.1:12121, 192.168.0.2:12121, 192.168.0.3:12121
+			<code>InetSocketAddress[] addresses = root.getInetSocketAddresses('memcache.servers'); </code>
+		</para>
+	</section>
+	<section>
+		<title>接口说明</title>
+		<para>
+			通过Config接口可直接获取多种类型的选项值，包括：int/long/boolean/float/double/string/date/InetSocketAddress，每种类型的方法都进行了重载。
+			下面是string类型为例，说明各个方法。
+			public String get();	//获取Config对象根结点的选项值，一般只在某个分支上调用有意义
+			public String get(String optionName);	//返回指定名称的选项值
+			public String get(String optionName, String defVal);	//返回指定名称的选项值，如果选项不存在或不合法，则返回defVal
+			public String[] gets(String optionName);	//将指定名称的选项的字符串值按','分开(并转换成所需类型)，返回一组值
+			public String[] gets(String optionName, String separator);	//同上，只是分隔符由separator指定
+		</para>
+		<para>
+			取得分支：
+			public Config getBranch(String branchName);
+			返回的分支同样是一个Config对象。注意：从分支上获取配置项时，选项名不包括分支前缀。
+		</para>
+		<para>
+			得到所有配置项名称：
+			public String[] getOptionNames();
+		</para>
+		<para>
+			转换成Map：
+			public Map&lt;String, String&gt; toMap();
+			public &lt;T&gt; Map&lt;String, T&gt; toMap(Class&lt;T&gt; valueClazz);
+		</para>
+	</section>
+</article>
